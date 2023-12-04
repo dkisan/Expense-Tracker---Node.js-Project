@@ -4,15 +4,16 @@ const app = express();
 
 app.use(bodyParser.json())
 
+const sequelize = require('./util/database')
 
 const userroute = require('./routes/userroute')
 
 
 
-app.post('/user/signup',(req,res,next)=>{
-    console.log(req.body)
-    console.log('signup form submitting')
-})
-app.use('/',userroute)
 
-app.listen(3000);
+app.use('/', userroute)
+
+sequelize.sync()
+    .then(() => {
+        app.listen(3000);
+    })

@@ -28,6 +28,9 @@
             <a href="">Existing User ? Login</a>
             <button type="submit">Signup</button>
         </div>
+        <div>
+            <p style="text-align: center;" id="statusmessage"></p>
+        </div>
     </form>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
@@ -35,15 +38,28 @@
         const name = document.getElementById('signupname')
         const email = document.getElementById('signupemail')
         const password = document.getElementById('signuppassword')
+        const statusmessage = document.getElementById('statusmessage')
 
         const formsignupHandler = (e) => {
             e.preventDefault();
-            console.log(name.value,email.value,password.value)
-            axios.post('http://localhost:3000/user/signup',{
-                name:name.value,
-                email:email.value,
-                password:password.value
+            console.log(name.value, email.value, password.value)
+            axios.post('http://localhost:3000/user/signup', {
+                name: name.value,
+                email: email.value,
+                password: password.value
             })
+                .then(result => {
+                    if (result.data.errors) {
+                        statusmessage.style.color = 'red'
+                        statusmessage.innerHTML = 'User Already Exists'
+                    } else {
+                        statusmessage.style.color = 'green'
+                        statusmessage.innerHTML = 'User Created Successfully'
+                    }
+                })
+                .catch(err => {
+                    console.log(err)
+                })
         }
     </script>
 
