@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup</title>
+</head>
+
+<body>
+
+    <h1 style="text-align: center; color: blue;"><u>Expense Tracker</u></h1>
+    <form style="margin: auto; width: max-content; display: flex; flex-direction: column; gap: 10px; " action=""
+        onsubmit="formsignupHandler(event)" method="post">
+        <div style="display: flex; gap: 4px;">
+            <label for="">Enter Your Name : </label>
+            <input style="flex: 1;" type="text" name="" id="signupname">
+        </div>
+        <div style="display: flex; gap: 4px; ">
+            <label for="">Enter Your Email : </label>
+            <input style="flex: 1;" type="email" name="" id="signupemail">
+        </div>
+        <div style="display: flex; gap: 4px; ">
+            <label for="">Enter Your Password : </label>
+            <input style="flex: 1;" type="password" name="" id="signuppassword">
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <a href="">Existing User ? Login</a>
+            <button type="submit">Signup</button>
+        </div>
+    </form>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
+    <script>
+        const name = document.getElementById('signupname')
+        const email = document.getElementById('signupemail')
+        const password = document.getElementById('signuppassword')
+
+        const formsignupHandler = (e) => {
+            e.preventDefault();
+            console.log(name.value,email.value,password.value)
+            axios.post('http://localhost:3000/user/signup',{
+                name:name.value,
+                email:email.value,
+                password:password.value
+            })
+        }
+    </script>
+
+</body>
+
+</html>
