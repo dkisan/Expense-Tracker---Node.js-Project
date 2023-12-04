@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Expense</title>
+</head>
+
+<body>
+
+    <h1 style="text-align: center; color: blue;"><u>Add Expenses</u></h1>
+    <form style="margin: auto; width: max-content; display: flex; flex-direction: row; gap: 10px; " action=""
+        onsubmit="formaddexpHandler(event)" method="post">
+        <div style="display: flex; gap: 4px;">
+            <label for="">Choose Expense Ammount : </label>
+            <input style="flex: 1;" type="number" name="" id="expamount">
+        </div>
+        <div style="display: flex; gap: 4px; ">
+            <label for="">Chooose Description : </label>
+            <input style="flex: 1;" type="text" name="" id="expdesc">
+        </div>
+        <div style="display: flex; gap: 4px; ">
+            <label for="">Choose a Category : </label>
+            <select name="" id="expcat">
+                <option value="Fuel">Fuel</option>
+                <option value="Food">Food</option>
+                <option value="Electricity">Electricity</option>
+                <option value="Movie">Movie</option>
+            </select>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <button type="submit">Add Expense</button>
+        </div>
+    </form>
+    <hr>
+    <div>
+        <p style="text-align: center;" id="statusmessage"></p>
+        <ul id="expslists"></ul>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"></script>
+    <script>
+        const expamount = document.getElementById('expamount')
+        const expcat = document.getElementById('expcat')
+        const expdesc = document.getElementById('expdesc')
+        const statusmessage = document.getElementById('statusmessage')
+        const expslists = document.getElementById('expslists')
+
+        const formaddexpHandler = (e) => {
+            e.preventDefault();
+            axios.post('http://localhost:3000/expense/addexpense', {
+                amount: expamount.value,
+                description: expcat.value,
+                category: expdesc.value
+            })
+                .then(result => {
+                    if (result.status == 200) {
+                        const data = {
+                            amount: expamount.value,
+                            description: expcat.value,
+                            category: expdesc.value,
+                            id:result.data.id
+                        }
+                        createElement(data)
+                        statusmessage.style.color = 'green'
+                        statusmessage.innerHTML = result.data.message
+                        setTimeout(() => {
+                            statusmessage.style.color = 'green'
+                            statusmessage.innerHTML = ''
+                        }, 1000)
+                    } else {
+                        statusmessage.style.color = 'red'
+                        statusmessage.innerHTML = 'Something Went Wrong'
+                    }
+                })
+                .catch(err => {
+                    statusmessage.style.color = 'red'
+                    statusmessage.innerHTML = 'Something Went Wrong'
+                })
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const exps = await axios.get('http://localhost:3000/expense/getexpense')
+            if (exps.data.length > 0) {
+                exps.data.map(e => {
+                    createElement(e)
+                })
+            }
+        })
+
+        function createElement(data) {
+            const li = document.createElement('li')
+            li.appendChild(document.createTextNode(`${data.amount}Rs - ${data.description} - ${data.category} `))
+            const button = document.createElement('button')
+            button.setAttribute('onclick', `deleteExpense(event,${data.id})`)
+            button.appendChild(document.createTextNode('Delete Expense'))
+            li.appendChild(button)
+            expslists.appendChild(li)
+        }
+
+
+        async function deleteExpense(e,id) {
+            await axios.delete('http://localhost:3000/expense/deleteexpense', {
+                data: {
+                    id: id
+                }
+            })
+                .then(result => {
+                    if (result.status == 200) {
+                        expslists.removeChild(e.target.parentElement)
+                        statusmessage.style.color = 'green'
+                        statusmessage.innerHTML = result.data.message
+                        setTimeout(() => {
+                            statusmessage.style.color = 'green'
+                            statusmessage.innerHTML = ''
+                        }, 1000)
+                    }
+                })
+                .catch(err => {
+                    console.log(err)
+                })
+        }
+
+    </script>
+
+</body>
+
+</html>

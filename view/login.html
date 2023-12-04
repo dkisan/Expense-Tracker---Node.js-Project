@@ -45,14 +45,17 @@
                     if (result.status == 200) {
                         statusmessage.style.color = 'green'
                         statusmessage.innerHTML = result.data.message
+                        setTimeout(() => {
+                            window.location.href = 'expense/dashboard'
+                        }, 1000)
                     }
                 })
                 .catch(err => {
-                    if(err.message === "Request failed with status code 401"){
+                    if (err.message === "Request failed with status code 401") {
                         statusmessage.style.color = 'red'
                         statusmessage.innerHTML = "Incorrect Credentials"
                     }
-                    if(err.message === "Request failed with status code 404"){
+                    if (err.message === "Request failed with status code 404") {
                         statusmessage.style.color = 'red'
                         statusmessage.innerHTML = "User Not Found"
                     }
