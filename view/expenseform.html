@@ -82,7 +82,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const exps = await axios.get('http://localhost:3000/expense/getexpense')
+            const exps = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`)
             if (exps.data.length > 0) {
                 exps.data.map(e => {
                     createElement(e)

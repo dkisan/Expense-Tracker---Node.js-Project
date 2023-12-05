@@ -12,7 +12,16 @@ exports.getExpensePage = (req, res, next) => {
 
 exports.getExpenses = async (req, res, next) => {
     try {
-        const exp = await Expense.findAll()
+        const uid = jwt.verify(req.params.usertoken, pvtkey, (err, decoded) => {
+            if (err) throw new Error;
+            return decoded
+        })
+        const user = await User.findOne({
+            where: {
+                id: uid
+            }
+        })
+        const exp = await user.getExpenses()
         res.status(200).json(exp)
     } catch (err) {
         res.status(500).json(err)
