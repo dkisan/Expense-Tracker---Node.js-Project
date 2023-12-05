@@ -11,6 +11,9 @@
 
     <button id="premid" style="display: flex; float: right;" onclick="buyPremiumHandler()">Buy Premium
         Membership</button>
+    <p style="text-align: end; font-weight: bolder; color: rgb(134, 29, 233); font-style: italic;" id="premstatus"></p>
+    <button id="leaderid" style="visibility: hidden; display: flex; float: right;" onclick="buyPremiumHandler()">Show
+        Leaderboard</button>
     <h1 style="text-align: center; color: blue;"><u>Add Expenses</u></h1>
     <form style="margin: auto; width: max-content; display: flex; flex-direction: row; gap: 10px; " action=""
         onsubmit="formaddexpHandler(event)" method="post">
@@ -39,6 +42,12 @@
     <div>
         <p style="text-align: center;" id="statusmessage"></p>
         <ul id="expslists"></ul>
+    </div>
+
+    <div id="leaderboardid" style="visibility: hidden;">
+        <hr>
+        <h1 style="text-align: center;">Leader Board</h1>
+        <ul id="leaderlistid"></ul>
     </div>
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -80,13 +89,15 @@
                         .then(result => {
                             if (result.status == 201) {
                                 alert(result.data.message)
+                                document.getElementById('premid').remove()
+                                document.getElementById('premstatus').innerHTML = "You are a Premium User"
                             }
                         })
                         .catch(() => {
                             alert('Something Went wrong')
                             alert('Try Again')
                         })
-                    
+
                 }
 
             }
@@ -96,12 +107,12 @@
 
             rzp1.open();
 
-            rzp1.on('payment.failed',(response)=>{
+            rzp1.on('payment.failed', (response) => {
                 axios.post('http://localhost:3000/expense/failedpurchase', {
-                        uid: localStorage.getItem('uid'),
-                        pay_id: response.error.metadata.payment_id,
-                        order_id: response.error.metadata.order_id
-                    })
+                    uid: localStorage.getItem('uid'),
+                    pay_id: response.error.metadata.payment_id,
+                    order_id: response.error.metadata.order_id
+                })
             })
 
         }
@@ -146,6 +157,8 @@
             })
             if (isprem.data) {
                 document.getElementById('premid').remove()
+                document.getElementById('premstatus').innerHTML = "You are a Premium User"
+                document.getElementById('leaderid').style.visibility = 'visible'
             }
             const exps = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`)
             if (exps.data.length > 0) {
@@ -153,6 +166,17 @@
                     createElement(e)
                 })
             }
+        })
+
+        document.getElementById('leaderid').addEventListener('click', async () => {
+            document.getElementById('leaderboardid').style.visibility = 'visible'
+            const exps = await axios.get(`http://localhost:3000/expense/leaderboard`)
+            exps.data.map(async e=>{
+                const li = document.createElement('li')
+                const name = await axios.get(`http://localhost:3000/expense/name/${e.userId}`)
+                li.appendChild(document.createTextNode(`Name : ${name.data.name} , Total Expense : ${e.total} Rs`))
+                document.getElementById('leaderlistid').appendChild(li)
+            })
         })
 
         function createElement(data) {

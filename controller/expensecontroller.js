@@ -7,6 +7,7 @@ const Expense = require('../model/expense')
 const User = require('../model/user')
 
 const Razorpay = require('razorpay')
+const sequelize = require('../util/database')
 
 
 exports.getExpensePage = (req, res, next) => {
@@ -44,7 +45,6 @@ exports.purchaseorder = async (req, res, next) => {
 
     try {
         instance.orders.create(options, async (err, order) => {
-            console.log(order)
             if (order) {
                 const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
                     return decoded
@@ -200,4 +200,25 @@ exports.deleteExpense = async (req, res, next) => {
     } catch (err) {
         return res.status(500).json(err)
     }
+}
+
+exports.getLeaderboard = async (req, res, next) => {
+    const t = await Expense.findAll({
+        attributes: [
+            'userId',
+            [sequelize.fn('sum', sequelize.col('amount')), 'total']
+        ],
+        group: ['userId'],
+        order: [['total', 'DESC']]
+    })
+    return res.json(t)
+}
+
+exports.getName = async (req, res, next) => {
+    const name = await User.findOne({
+        where:{
+            id: req.params.uid
+        }
+    })
+    return res.json({name:name.name})
 }
