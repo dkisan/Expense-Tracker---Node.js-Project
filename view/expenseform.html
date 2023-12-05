@@ -52,7 +52,8 @@
             axios.post('http://localhost:3000/expense/addexpense', {
                 amount: expamount.value,
                 description: expcat.value,
-                category: expdesc.value
+                category: expdesc.value,
+                uid: localStorage.getItem('uid')
             })
                 .then(result => {
                     if (result.status == 200) {
@@ -60,7 +61,7 @@
                             amount: expamount.value,
                             description: expcat.value,
                             category: expdesc.value,
-                            id:result.data.id
+                            id: result.data.id
                         }
                         createElement(data)
                         statusmessage.style.color = 'green'
@@ -100,13 +101,15 @@
         }
 
 
-        async function deleteExpense(e,id) {
+        async function deleteExpense(e, id) {
             await axios.delete('http://localhost:3000/expense/deleteexpense', {
                 data: {
-                    id: id
+                    id: id,
+                    uid: localStorage.getItem('uid')
                 }
             })
                 .then(result => {
+                    console.log(result)
                     if (result.status == 200) {
                         expslists.removeChild(e.target.parentElement)
                         statusmessage.style.color = 'green'
@@ -115,9 +118,22 @@
                             statusmessage.style.color = 'green'
                             statusmessage.innerHTML = ''
                         }, 1000)
+                    } else {
+                        statusmessage.style.color = 'red'
+                        statusmessage.innerHTML = result.data.message
+                        setTimeout(() => {
+                            statusmessage.style.color = 'red'
+                            statusmessage.innerHTML = ''
+                        }, 1000)
                     }
                 })
                 .catch(err => {
+                    statusmessage.style.color = 'red'
+                    statusmessage.innerHTML = 'Some error occured'
+                    setTimeout(() => {
+                        statusmessage.style.color = 'red'
+                        statusmessage.innerHTML = ''
+                    }, 1000)
                     console.log(err)
                 })
         }

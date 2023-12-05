@@ -3,6 +3,9 @@ const path = require('path')
 const bcrypt = require('bcrypt')
 const saltRounds = 10
 
+const jwt = require('jsonwebtoken')
+const pvtkey = 'backendencryptstring'
+
 
 const User = require('../model/user')
 
@@ -44,7 +47,8 @@ exports.postlogin = async (req, res, next) => {
         if (user) {
             bcrypt.compare(req.body.password, user.password, (err, result) => {
                 if (result) {
-                    res.status(200).send({ message: "User Login Successfully" })
+                    var token = jwt.sign(user.id,pvtkey)
+                    res.status(200).send({ message: "User Login Successfully", userid:token })
                 } else {
                     res.status(401).send({ message: "Incorrect Credentials" })
                 }

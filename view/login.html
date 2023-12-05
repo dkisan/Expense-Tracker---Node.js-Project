@@ -43,6 +43,7 @@
             })
                 .then(result => {
                     if (result.status == 200) {
+                        localStorage.setItem('uid',result.data.userid)
                         statusmessage.style.color = 'green'
                         statusmessage.innerHTML = result.data.message
                         setTimeout(() => {
