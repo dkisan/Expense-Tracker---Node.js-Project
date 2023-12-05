@@ -19,18 +19,27 @@ exports.getlogin = (req, res, next) => {
 
 exports.postsignup = async (req, res, next) => {
     try {
-        let password = req.body.password;
-        bcrypt.genSalt(saltRounds, (err, salt) => {
-            bcrypt.hash(password, salt, async (err, hash) => {
-
-                const user = await User.create({
-                    name: req.body.name,
-                    email: req.body.email,
-                    password: hash
-                })
-                res.send(user)
-            })
+        const user = await User.findOne({
+            where: {
+                email: req.body.email,
+            }
         })
+        if (!user) {
+            let password = req.body.password;
+            bcrypt.genSalt(saltRounds, (err, salt) => {
+                bcrypt.hash(password, salt, async (err, hash) => {
+
+                    const user = await User.create({
+                        name: req.body.name,
+                        email: req.body.email,
+                        password: hash
+                    })
+                    res.status(200).send(user)
+                })
+            })
+        }else{
+            return res.status(400).json({message:'User Already Exist'})
+        }
     }
     catch (err) {
         res.send(err)
@@ -47,8 +56,8 @@ exports.postlogin = async (req, res, next) => {
         if (user) {
             bcrypt.compare(req.body.password, user.password, (err, result) => {
                 if (result) {
-                    var token = jwt.sign(user.id,pvtkey)
-                    res.status(200).send({ message: "User Login Successfully", userid:token })
+                    var token = jwt.sign(user.id, pvtkey)
+                    res.status(200).send({ message: "User Login Successfully", userid: token })
                 } else {
                     res.status(401).send({ message: "Incorrect Credentials" })
                 }

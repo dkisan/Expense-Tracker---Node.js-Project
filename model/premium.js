@@ -8,12 +8,17 @@ const  premium = sequelize.define('premium',{
         primaryKey:true,
         allowNull:false
     },
+    orderId:{
+        type: Sequelize.STRING,
+        allowNull: false
+    },
     paymentid:{
         type:Sequelize.STRING,
-        allowNull:false
+        allowNull:false,
+        defalultValue:'nill'
     },
     status:{
-        type:Sequelize.BOOLEAN,
+        type:Sequelize.STRING,
         allowNull:false
     }
 })

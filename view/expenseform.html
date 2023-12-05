@@ -9,7 +9,8 @@
 
 <body>
 
-    <button id="premid" style="display: flex; float: right;" onclick="buyPremiumHandler()">Buy Premium Membership</button>
+    <button id="premid" style="display: flex; float: right;" onclick="buyPremiumHandler()">Buy Premium
+        Membership</button>
     <h1 style="text-align: center; color: blue;"><u>Add Expenses</u></h1>
     <form style="margin: auto; width: max-content; display: flex; flex-direction: row; gap: 10px; " action=""
         onsubmit="formaddexpHandler(event)" method="post">
@@ -53,88 +54,56 @@
 
 
         async function buyPremiumHandler() {
-            const isprem = await axios.post('http://localhost:3000/expense/ispremium', {
+            const order = await axios.post('http://localhost:3000/expense/purchaseorder', {
                 uid: localStorage.getItem('uid')
             })
-            if (isprem.data) {
-                alert('You are already a Premium Member')
-            } else {
 
-                var options = {
-                    "key": "rzp_test_JlKni6zYUpGLUT", // Enter the Key ID generated from the Dashboard
-                    "amount": "25000",
-                    "currency": "INR",
-                    "description": "Expense Tracker membership",
-                    "image": "https://s3.amazonaws.com/rzp-mobile/images/rzp.jpg",
-                    config: {
-                        display: {
-                            blocks: {
-                                utib: { //name for Axis block
-                                    name: "Pay using Axis Bank",
-                                    instruments: [
-                                        {
-                                            method: "card",
-                                            issuers: ["UTIB"]
-                                        },
-                                        {
-                                            method: "netbanking",
-                                            banks: ["UTIB"]
-                                        },
-                                    ]
-                                },
-                                other: { //  name for other block
-                                    name: "Other Payment modes",
-                                    instruments: [
-                                        {
-                                            method: "card",
-                                            issuers: ["ICIC"]
-                                        },
-                                        {
-                                            method: 'netbanking',
-                                        }
-                                    ]
-                                }
-                            },
-                            hide: [
-                                {
-                                    method: "upi"
-                                }
-                            ],
-                            sequence: ["block.utib", "block.other"],
-                            preferences: {
-                                show_default_blocks: false // Should Checkout show its default blocks?
+            var options = {
+                "key": 'rzp_test_JlKni6zYUpGLUT',
+                "amount": '250000',
+                "name": "test",
+                "order_id": order.data.order.id,
+                "prefill": {
+                    "name": "test name",
+                    "email": "testemail@email.com",
+                    "contact": 1234567890
+                },
+                "theme": {
+                    "color": "#3399cc"
+                },
+                "handler": function (response) {
+                    axios.post('http://localhost:3000/expense/purchasepremium', {
+                        uid: localStorage.getItem('uid'),
+                        pay_id: response.razorpay_payment_id,
+                        order_id: response.razorpay_order_id
+                    })
+                        .then(result => {
+                            if (result.status == 201) {
+                                alert(result.data.message)
                             }
-                        }
-                    },
-                    "handler": function (response) {
-
-                        axios.post('http://localhost:3000/expense/purchasepremium', {
-                            uid: localStorage.getItem('uid'),
-                            pay_id: response.razorpay_payment_id
                         })
-                            .then(result => {
-                                if (result.status == 201) {
-                                    alert(result.data.message)
-                                }
-                            })
-                    },
-                    "modal": {
-                        "ondismiss": function () {
-                            if (confirm("Are you sure, you want to close the form?")) {
-                                txt = "You pressed OK!";
-                                console.log("Checkout form closed by the user");
-                            } else {
-                                txt = "You pressed Cancel!";
-                                console.log("Complete the Payment")
-                            }
-                        }
-                    }
-                };
-                var rzp1 = new Razorpay(options);
+                        .catch(() => {
+                            alert('Something Went wrong')
+                            alert('Try Again')
+                        })
+                    
+                }
 
-                rzp1.open();
             }
-            // e.preventDefault();
+
+
+            var rzp1 = new Razorpay(options);
+
+            rzp1.open();
+
+            rzp1.on('payment.failed',(response)=>{
+                axios.post('http://localhost:3000/expense/failedpurchase', {
+                        uid: localStorage.getItem('uid'),
+                        pay_id: response.error.metadata.payment_id,
+                        order_id: response.error.metadata.order_id
+                    })
+            })
+
         }
 
         const formaddexpHandler = (e) => {
@@ -175,8 +144,8 @@
             const isprem = await axios.post('http://localhost:3000/expense/ispremium', {
                 uid: localStorage.getItem('uid')
             })
-            if(isprem.data){
-document.getElementById('premid').remove()
+            if (isprem.data) {
+                document.getElementById('premid').remove()
             }
             const exps = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`)
             if (exps.data.length > 0) {
