@@ -204,21 +204,15 @@ exports.deleteExpense = async (req, res, next) => {
 
 exports.getLeaderboard = async (req, res, next) => {
     const t = await Expense.findAll({
+        include:[{
+            model:User,
+            attributes:['name']
+        }],
         attributes: [
-            'userId',
             [sequelize.fn('sum', sequelize.col('amount')), 'total']
         ],
         group: ['userId'],
         order: [['total', 'DESC']]
     })
     return res.json(t)
-}
-
-exports.getName = async (req, res, next) => {
-    const name = await User.findOne({
-        where:{
-            id: req.params.uid
-        }
-    })
-    return res.json({name:name.name})
 }

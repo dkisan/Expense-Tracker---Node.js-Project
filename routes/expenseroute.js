@@ -5,7 +5,6 @@ const expensecontroller = require('../controller/expensecontroller')
 
 router.get('/dashboard',expensecontroller.getExpensePage)
 router.get('/leaderboard',expensecontroller.getLeaderboard)
-router.get('/name/:uid',expensecontroller.getName)
 router.get('/getexpense/:usertoken',expensecontroller.getExpenses)
 router.post('/purchasepremium',expensecontroller.purchasepremium)
 router.post('/purchaseorder',expensecontroller.purchaseorder)

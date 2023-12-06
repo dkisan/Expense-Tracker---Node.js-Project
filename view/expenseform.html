@@ -173,8 +173,7 @@
             const exps = await axios.get(`http://localhost:3000/expense/leaderboard`)
             exps.data.map(async e=>{
                 const li = document.createElement('li')
-                const name = await axios.get(`http://localhost:3000/expense/name/${e.userId}`)
-                li.appendChild(document.createTextNode(`Name : ${name.data.name} , Total Expense : ${e.total} Rs`))
+                li.appendChild(document.createTextNode(`Name : ${e.user.name} , Total Expense : ${e.total} Rs`))
                 document.getElementById('leaderlistid').appendChild(li)
             })
         })
