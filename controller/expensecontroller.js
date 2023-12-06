@@ -95,6 +95,7 @@ exports.failedpurchase = async (req, res, next) => {
 
 
 exports.purchasepremium = async (req, res, next) => {
+    const t = await sequelize.transaction()
     try {
         const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
             if (err) throw new Error;
@@ -113,14 +114,20 @@ exports.purchasepremium = async (req, res, next) => {
         const p = await prem.update({
             status: 'success',
             paymentid: req.body.pay_id
-        })
+        },
+            { transaction: t }
+        )
         if (p) {
             await user.update({
                 ispremium: true
-            })
+            },
+                { transaction: t }
+            )
+            await t.commit()
             return res.status(201).json({ message: 'You are a now a Premium Member' })
         }
     } catch (err) {
+        await t.rollback()
         return res.status(500).json(err)
     }
 
@@ -145,6 +152,7 @@ exports.getExpenses = async (req, res, next) => {
 }
 
 exports.postAddExpense = async (req, res, next) => {
+    const t = await sequelize.transaction()
     try {
         const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
             if (err) throw new Error;
@@ -159,22 +167,29 @@ exports.postAddExpense = async (req, res, next) => {
             amount: req.body.amount,
             description: req.body.description,
             category: req.body.category
-        })
+        },
+        {transaction:t}
+        )
         if (exp) {
             await user.update({
-                totalexpense : user.totalexpense + +exp.amount
-            })
+                totalexpense: user.totalexpense + +exp.amount
+            },
+            {transaction:t}
+            )
+            await t.commit()
             return res.status(200).json({ message: 'Expense Added Successfully', id: exp.id })
         } else {
             return res.status(500).json({ message: 'some error occured' })
         }
     } catch (err) {
+        await t.rollback()
         console.log(err.message)
         return res.status(500).json(err)
     }
 }
 
 exports.deleteExpense = async (req, res, next) => {
+    const t = await sequelize.transaction()
     try {
         const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
             if (err) throw new Error;
@@ -195,15 +210,21 @@ exports.deleteExpense = async (req, res, next) => {
                 where: {
                     id: exp[0].dataValues.id
                 }
-            })
+            },
+            {transaction:t}
+            )
             await user.update({
-                totalexpense : user.totalexpense - exp[0].dataValues.amount
-            })
+                totalexpense: user.totalexpense - exp[0].dataValues.amount
+            },
+            {transaction:t}
+            )
+            await t.commit()
             return res.status(200).json({ message: 'Expense Deleted Successfully' })
         } else {
             return res.status(500).json({ message: 'Some Error occured' })
         }
     } catch (err) {
+        await t.rollback()
         return res.status(500).json(err)
     }
 }
@@ -223,8 +244,8 @@ exports.getLeaderboard = async (req, res, next) => {
     // return res.json(t)
 
     const l = await User.findAll({
-        attributes:['name','totalexpense'],
-        order:[['totalexpense','DESC']]
+        attributes: ['name', 'totalexpense'],
+        order: [['totalexpense', 'DESC']]
     })
     return res.json(l)
 }
