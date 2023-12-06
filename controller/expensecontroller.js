@@ -161,6 +161,9 @@ exports.postAddExpense = async (req, res, next) => {
             category: req.body.category
         })
         if (exp) {
+            await user.update({
+                totalexpense : user.totalexpense + +exp.amount
+            })
             return res.status(200).json({ message: 'Expense Added Successfully', id: exp.id })
         } else {
             return res.status(500).json({ message: 'some error occured' })
@@ -193,6 +196,9 @@ exports.deleteExpense = async (req, res, next) => {
                     id: exp[0].dataValues.id
                 }
             })
+            await user.update({
+                totalexpense : user.totalexpense - exp[0].dataValues.amount
+            })
             return res.status(200).json({ message: 'Expense Deleted Successfully' })
         } else {
             return res.status(500).json({ message: 'Some Error occured' })
@@ -203,16 +209,22 @@ exports.deleteExpense = async (req, res, next) => {
 }
 
 exports.getLeaderboard = async (req, res, next) => {
-    const t = await Expense.findAll({
-        include:[{
-            model:User,
-            attributes:['name']
-        }],
-        attributes: [
-            [sequelize.fn('sum', sequelize.col('amount')), 'total']
-        ],
-        group: ['userId'],
-        order: [['total', 'DESC']]
+    // const t = await Expense.findAll({
+    //     include:[{
+    //         model:User,
+    //         attributes:['name']
+    //     }],
+    //     attributes: [
+    //         [sequelize.fn('sum', sequelize.col('amount')), 'total']
+    //     ],
+    //     group: ['userId'],
+    //     order: [['total', 'DESC']]
+    // })
+    // return res.json(t)
+
+    const l = await User.findAll({
+        attributes:['name','totalexpense'],
+        order:[['totalexpense','DESC']]
     })
-    return res.json(t)
+    return res.json(l)
 }

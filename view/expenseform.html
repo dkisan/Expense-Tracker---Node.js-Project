@@ -12,7 +12,7 @@
     <button id="premid" style="display: flex; float: right;" onclick="buyPremiumHandler()">Buy Premium
         Membership</button>
     <p style="text-align: end; font-weight: bolder; color: rgb(134, 29, 233); font-style: italic;" id="premstatus"></p>
-    <button id="leaderid" style="visibility: hidden; display: flex; float: right;" onclick="buyPremiumHandler()">Show
+    <button id="leaderid" style="visibility: hidden; display: flex; float: right;">Show
         Leaderboard</button>
     <h1 style="text-align: center; color: blue;"><u>Add Expenses</u></h1>
     <form style="margin: auto; width: max-content; display: flex; flex-direction: row; gap: 10px; " action=""
@@ -68,7 +68,7 @@
             })
 
             var options = {
-                "key": 'rzp_test_JlKni6zYUpGLUT',
+                "key": 'rzp_test_LZatoItzsPPRit',
                 "amount": '250000',
                 "name": "test",
                 "order_id": order.data.order.id,
@@ -173,7 +173,7 @@
             const exps = await axios.get(`http://localhost:3000/expense/leaderboard`)
             exps.data.map(async e=>{
                 const li = document.createElement('li')
-                li.appendChild(document.createTextNode(`Name : ${e.user.name} , Total Expense : ${e.total} Rs`))
+                li.appendChild(document.createTextNode(`Name : ${e.name} , Total Expense : ${e.totalexpense} Rs`))
                 document.getElementById('leaderlistid').appendChild(li)
             })
         })
