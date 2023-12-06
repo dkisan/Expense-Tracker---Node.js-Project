@@ -10,9 +10,51 @@ const Razorpay = require('razorpay')
 const sequelize = require('../util/database')
 
 
+
+
+
 exports.getExpensePage = (req, res, next) => {
     res.sendFile(path.join(__dirname, '../', 'view', '/expenseform.html'))
 }
+
+exports.getResetPasswordPage = (req, res, next) => {
+    res.sendFile(path.join(__dirname, '../', 'view', '/forgotpassword.html'))
+}
+
+exports.postResetPassword = async (req, res, next) => {
+    console.log(req.body)
+    var SibApiV3Sdk = require('sib-api-v3-sdk');
+    var defaultClient = SibApiV3Sdk.ApiClient.instance;
+    var apiKey = defaultClient.authentications['api-key'];
+    apiKey.apiKey = process.env.smtp_key;
+    var apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const sender = {
+        email: 'admin@gmail.com'
+    }
+
+    const receivers = [
+        {
+            email: req.body.email
+        }
+    ]
+
+    try {
+        const sendEmail = await apiInstance.sendTransacEmail({
+            sender,
+            to: receivers,
+            subject: 'Reset Password',
+            textContent: 'Password Reset Link'
+})
+        console.log(sendEmail)
+    } catch (err) {
+        console.log(err.message)
+    }
+
+
+
+  
+}
+
 exports.ispremium = async (req, res, next) => {
     try {
         const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
@@ -168,13 +210,13 @@ exports.postAddExpense = async (req, res, next) => {
             description: req.body.description,
             category: req.body.category
         },
-        {transaction:t}
+            { transaction: t }
         )
         if (exp) {
             await user.update({
                 totalexpense: user.totalexpense + +exp.amount
             },
-            {transaction:t}
+                { transaction: t }
             )
             await t.commit()
             return res.status(200).json({ message: 'Expense Added Successfully', id: exp.id })
@@ -211,12 +253,12 @@ exports.deleteExpense = async (req, res, next) => {
                     id: exp[0].dataValues.id
                 }
             },
-            {transaction:t}
+                { transaction: t }
             )
             await user.update({
                 totalexpense: user.totalexpense - exp[0].dataValues.amount
             },
-            {transaction:t}
+                { transaction: t }
             )
             await t.commit()
             return res.status(200).json({ message: 'Expense Deleted Successfully' })

@@ -4,6 +4,8 @@ const router = express.Router()
 const expensecontroller = require('../controller/expensecontroller')
 
 router.get('/dashboard',expensecontroller.getExpensePage)
+router.get('/resetpassword',expensecontroller.getResetPasswordPage)
+router.post('/resetpassword',expensecontroller.postResetPassword)
 router.get('/leaderboard',expensecontroller.getLeaderboard)
 router.get('/getexpense/:usertoken',expensecontroller.getExpenses)
 router.post('/purchasepremium',expensecontroller.purchasepremium)
