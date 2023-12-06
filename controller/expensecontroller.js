@@ -1,5 +1,9 @@
 const path = require('path')
 
+const bcrypt = require('bcrypt')
+const saltRounds = 10
+
+
 const jwt = require('jsonwebtoken')
 const pvtkey = 'backendencryptstring'
 
@@ -9,8 +13,8 @@ const User = require('../model/user')
 const Razorpay = require('razorpay')
 const sequelize = require('../util/database')
 
-
-
+const { v4: uuidv4 } = require('uuid');
+const Forgotpassword = require('../model/forgetpassword')
 
 
 exports.getExpensePage = (req, res, next) => {
@@ -21,8 +25,67 @@ exports.getResetPasswordPage = (req, res, next) => {
     res.sendFile(path.join(__dirname, '../', 'view', '/forgotpassword.html'))
 }
 
+exports.postResetPassworduuid = async (req, res, next) => {
+    const u = await Forgotpassword.findOne({
+        where: {
+            id: req.params.uuid
+        }
+    })
+    if (u.isactive) {
+        await u.update({
+            isactive: false
+        })
+        res.sendFile(path.join(__dirname, '../', 'view', '/updatepassword.html'))
+    } else {
+        res.send('<h3>Session Expired</h3>')
+    }
+}
+
+exports.postUpdatePassword = async (req, res, next) => {
+
+    try {
+        const u = await Forgotpassword.findOne({
+            where: {
+                id: req.body.uuid
+            },
+            attributes: ['userId']
+        })
+        const user = await User.findOne({
+            where: {
+                id: u.userId
+            }
+        })
+        let password = req.body.password;
+        bcrypt.genSalt(saltRounds, (err, salt) => {
+            bcrypt.hash(password, salt, async (err, hash) => {
+
+                await user.update({
+                    password: hash
+                })
+                return res.status(200).json({ message: 'Password Updated Successfully' })
+            })
+        })
+    } catch (err) {
+        return res.status(500).json(err)
+    }
+
+}
+
 exports.postResetPassword = async (req, res, next) => {
-    console.log(req.body)
+    const t = await sequelize.transaction()
+    const user = await User.findOne({
+        where: {
+            email: req.body.email
+        },
+        attributes: ['id']
+    })
+    const uuid4 = uuidv4();
+    await Forgotpassword.create({
+        id: uuid4,
+        userId: user.id,
+        isactive: true
+    },
+        { transaction: t })
     var SibApiV3Sdk = require('sib-api-v3-sdk');
     var defaultClient = SibApiV3Sdk.ApiClient.instance;
     var apiKey = defaultClient.authentications['api-key'];
@@ -43,16 +106,18 @@ exports.postResetPassword = async (req, res, next) => {
             sender,
             to: receivers,
             subject: 'Reset Password',
-            textContent: 'Password Reset Link'
-})
-        console.log(sendEmail)
+            textContent: `Password Reset Link <a href="http://localhost:3000/expense/password/resetpassword/${uuid4}">Click Here</a>`
+        })
+        console.log(sendEmail, req.body.email)
+        await t.commit()
     } catch (err) {
         console.log(err.message)
+        await t.rollback()
     }
 
 
 
-  
+
 }
 
 exports.ispremium = async (req, res, next) => {
@@ -110,7 +175,6 @@ exports.purchaseorder = async (req, res, next) => {
 }
 
 exports.failedpurchase = async (req, res, next) => {
-    console.log(req.body)
     try {
         const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
             if (err) throw new Error;

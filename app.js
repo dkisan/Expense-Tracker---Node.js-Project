@@ -15,7 +15,8 @@ const expenseroute = require('./routes/expenseroute')
 
 const User = require('./model/user')
 const Expense = require('./model/expense')
-const Premium = require('./model/premium')
+const Premium = require('./model/premium');
+const Forgotpassword = require('./model/forgetpassword');
 
 User.hasMany(Expense)
 Expense.belongsTo(User)
@@ -23,6 +24,8 @@ Expense.belongsTo(User)
 User.hasOne(Premium)
 Premium.belongsTo(User)
 
+User.hasMany(Forgotpassword)
+Forgotpassword.belongsTo(User)
 
 
 
