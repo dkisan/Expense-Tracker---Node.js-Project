@@ -66,8 +66,9 @@
                 </tbody>
             </table>
         </div>
-        <div style="display: flex; justify-content: center; margin-top: 2vh;">
-            <button onclick="downloadExpense()">Download Expenses</button>
+        <div style="display: flex; flex-direction: column; align-items: center; margin-top: 2vh;">
+            <button style="width: max-content;" onclick="downloadExpense()">Download Expenses</button>
+            <ul style="list-style-type: none;" id="dexplist"></ul>
         </div>
     </div>
 
@@ -98,12 +99,11 @@
                         a.href = response.data.fileurl
                         a.download = 'myexpense.csv'
                         a.click()
-                        console.log(response)
                     } else {
                         throw new Error(response.data.message)
                     }
                 })
-                .catch(err=>{
+                .catch(err => {
                     console.log(err.message)
                 })
         }
@@ -214,6 +214,17 @@
                 exps.data.map(e => {
                     createElement(e)
                     document.getElementById('expid').style.visibility = 'visible'
+                })
+            }
+            const delist = await axios.get(`http://localhost:3000/expense/downloadexpenses/${localStorage.getItem('uid')}`)
+            if(delist.data.length > 0){
+                delist.data.map(e => {
+                    const li = document.createElement('li')
+                    const a = document.createElement('a')
+                    a.setAttribute('href',`${e.url}`)
+                    a.appendChild(document.createTextNode(`${e.name}`))
+                    li.appendChild(a)
+                    document.getElementById('dexplist').appendChild(li)
                 })
             }
         })

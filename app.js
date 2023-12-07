@@ -17,6 +17,7 @@ const User = require('./model/user')
 const Expense = require('./model/expense')
 const Premium = require('./model/premium');
 const Forgotpassword = require('./model/forgetpassword');
+const Downloadurl = require('./model/downloadurl');
 
 User.hasMany(Expense)
 Expense.belongsTo(User)
@@ -27,6 +28,8 @@ Premium.belongsTo(User)
 User.hasMany(Forgotpassword)
 Forgotpassword.belongsTo(User)
 
+User.hasMany(Downloadurl)
+Downloadurl.belongsTo(User)
 
 
 app.use('/expense', expenseroute)

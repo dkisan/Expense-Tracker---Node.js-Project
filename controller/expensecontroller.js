@@ -374,7 +374,6 @@ function uploadToS3(data, filename) {
         ACL: 'public-read'
     }
     return new Promise((resolve, reject) => {
-
         s3bucket.upload(params, (err, s3response) => {
             if (err) {
                 console.log('Something Went Wrong')
@@ -389,21 +388,48 @@ function uploadToS3(data, filename) {
 
 
 exports.downloadExpenses = async (req, res, next) => {
-    const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
-        if (err) throw new Error;
-        return decoded
-    })
-    const user = await User.findOne({
-        where: {
-            id: uid
-        }
-    })
-    const expenses = await user.getExpenses();
-    const stringifiedExpenses = JSON.stringify(expenses)
-    const dt = new Date()
-    const filename = `Expense_${dt}.txt`
-    const fileurl = await uploadToS3(stringifiedExpenses, filename);
-    return res.status(200).json({ fileurl, success: true })
+    try {
+        const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
+            if (err) throw new Error;
+            return decoded
+        })
+        const user = await User.findOne({
+            where: {
+                id: uid
+            }
+        })
+        const expenses = await user.getExpenses();
+        const stringifiedExpenses = JSON.stringify(expenses)
+        const dt = new Date()
+        const filename = `Expense_${dt}.txt`
+        const fileurl = await uploadToS3(stringifiedExpenses, filename);
+        await user.createDownloadurl({
+            name: filename,
+            url: fileurl
+        })
+        return res.status(200).json({ fileurl, success: true })
+    } catch (err) {
+        return res.status(500).json({ fileurl: '', success: false, err: err })
+    }
+}
+
+
+exports.getdownloadExpenses = async (req, res, next) => {
+    try {
+        const uid = jwt.verify(req.params.uid, pvtkey, (err, decoded) => {
+            if (err) throw new Error;
+            return decoded
+        })
+        const user = await User.findOne({
+            where: {
+                id: uid
+            }
+        })
+        const dexp = await user.getDownloadurls()
+        return res.status(200).json(dexp)
+    } catch {
+        return res.status(500).json({ message: 'Some error occured' })
+    }
 }
 
 

@@ -5,6 +5,7 @@ const expensecontroller = require('../controller/expensecontroller')
 
 router.get('/dashboard',expensecontroller.getExpensePage)
 router.get('/resetpassword',expensecontroller.getResetPasswordPage)
+router.get('/downloadexpenses/:uid',expensecontroller.getdownloadExpenses)
 router.post('/updatepassword',expensecontroller.postUpdatePassword)
 router.post('/resetpassword',expensecontroller.postResetPassword)
 router.get('/password/resetpassword/:uuid',expensecontroller.postResetPassworduuid)
