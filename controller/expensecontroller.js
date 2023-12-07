@@ -241,6 +241,7 @@ exports.purchasepremium = async (req, res, next) => {
 }
 
 exports.getExpenses = async (req, res, next) => {
+    console.log(req.headers.pgno)
     try {
         const uid = jwt.verify(req.params.usertoken, pvtkey, (err, decoded) => {
             if (err) throw new Error;
@@ -251,8 +252,14 @@ exports.getExpenses = async (req, res, next) => {
                 id: uid
             }
         })
-        const exp = await user.getExpenses()
-        return res.status(200).json(exp)
+        let perpage = 10
+        let pgno = +req.headers.pgno - 1
+        const totalexp = await user.countExpenses()
+        const exp = await user.getExpenses({
+            offset: perpage*pgno,
+            limit:perpage
+        })
+        return res.status(200).json({exp:exp,totalexp:totalexp})
     } catch (err) {
         return res.status(500).json(err)
     }

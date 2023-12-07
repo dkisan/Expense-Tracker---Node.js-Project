@@ -65,6 +65,7 @@
 
                 </tbody>
             </table>
+            <ul id="paginationlist" style="list-style-type: none; width: 80vw; margin: auto; margin-top: 10px; display: flex; justify-content: flex-end; gap: 4px;"></ul>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; margin-top: 2vh;">
             <button style="width: max-content;" onclick="downloadExpense()">Download Expenses</button>
@@ -168,16 +169,16 @@
             e.preventDefault();
             axios.post('http://localhost:3000/expense/addexpense', {
                 amount: expamount.value,
-                description: expcat.value,
-                category: expdesc.value,
+                description: expdesc.value,
+                category: expcat.value,
                 uid: localStorage.getItem('uid')
             })
                 .then(result => {
                     if (result.status == 200) {
                         const data = {
                             amount: expamount.value,
-                            description: expcat.value,
-                            category: expdesc.value,
+                            description: expdesc.value,
+                            category: expcat.value,
                             id: result.data.id
                         }
                         document.getElementById('expid').style.visibility = 'visible'
@@ -199,6 +200,36 @@
                 })
         }
 
+        function fetchExp(pgno) {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const exp = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`, {
+                        headers: {
+                            pgno: pgno
+                        }
+                    })
+                    resolve(exp)
+                } catch (err) {
+                    reject(err)
+                }
+            })
+
+        }
+
+        async function paginatioHandler(pgno) {
+            const exps = await fetchExp(pgno)
+            const rowdata = document.getElementById('expenserow')
+            while(rowdata.firstChild){
+                rowdata.firstChild.remove()
+            }
+            if (exps.data.exp.length > 0) {
+                exps.data.exp.map(e => {
+                    createElement(e)
+                    document.getElementById('expid').style.visibility = 'visible'
+                })
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const isprem = await axios.post('http://localhost:3000/expense/ispremium', {
                 uid: localStorage.getItem('uid')
@@ -209,19 +240,30 @@
                 document.getElementById('leaderid').style.visibility = 'visible'
                 document.getElementById('filterid').style.visibility = 'visible'
             }
-            const exps = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`)
-            if (exps.data.length > 0) {
-                exps.data.map(e => {
+            // const exps = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`)
+            const exps = await fetchExp(1)
+            if (exps.data.exp.length > 0) {
+                exps.data.exp.map(e => {
                     createElement(e)
                     document.getElementById('expid').style.visibility = 'visible'
                 })
             }
+            let pgno = Math.ceil(exps.data.totalexp / 10)
+            console.log(exps.data.totalexp,pgno)
+            for (var i = 0; i < pgno; i++) {
+                const li = document.createElement('li')
+                const button = document.createElement('button')
+                button.appendChild(document.createTextNode(`${i + 1}`))
+                button.setAttribute('onClick', `paginatioHandler(${i + 1})`)
+                li.appendChild(button)
+                document.getElementById('paginationlist').appendChild(li)
+            }
             const delist = await axios.get(`http://localhost:3000/expense/downloadexpenses/${localStorage.getItem('uid')}`)
-            if(delist.data.length > 0){
+            if (delist.data.length > 0) {
                 delist.data.map(e => {
                     const li = document.createElement('li')
                     const a = document.createElement('a')
-                    a.setAttribute('href',`${e.url}`)
+                    a.setAttribute('href', `${e.url}`)
                     a.appendChild(document.createTextNode(`${e.name}`))
                     li.appendChild(a)
                     document.getElementById('dexplist').appendChild(li)
