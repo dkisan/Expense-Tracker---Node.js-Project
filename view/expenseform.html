@@ -39,32 +39,35 @@
         </div>
     </form>
     <hr>
-    <h1 style="text-align: center;">Expenses</h1>
-    <div style="display: flex; justify-content: center;">
-        <select name="" id="">
-            <option value="daily">daily</option>
-            <option value="monthly">monthly</option>
-            <option value="yearly">yearly</option>
-        </select>
-    </div>
-    <div>
-        <p style="text-align: center;" id="statusmessage"></p>
-        <table style="width: 80vw; margin: auto; line-height: 3vh; text-align: center; border-collapse: collapse; border: 2px solid black;">
-            <thead style="border-bottom: 2px solid black;">
-                <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Expenses</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="expenserow">
+    <div id="expid" style="visibility: hidden;">
+        <h1 style="text-align: center;">Expenses</h1>
+        <div id="filterid" style="display: flex; justify-content: center; visibility: hidden;">
+            <select name="" id="">
+                <option value="daily">daily</option>
+                <option value="monthly">monthly</option>
+                <option value="yearly">yearly</option>
+            </select>
+        </div>
+        <div>
+            <p style="text-align: center;" id="statusmessage"></p>
+            <table
+                style="width: 80vw; margin: auto; line-height: 3vh; text-align: center; border-collapse: collapse; border: 2px solid black;">
+                <thead style="border-bottom: 2px solid black;">
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Expenses</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="expenserow">
 
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
         <div style="display: flex; justify-content: center; margin-top: 2vh;">
-            <button>Download Expenses</button>
+            <button onclick="downloadExpense()">Download Expenses</button>
         </div>
     </div>
 
@@ -84,6 +87,26 @@
         const expdesc = document.getElementById('expdesc')
         const statusmessage = document.getElementById('statusmessage')
         const expslists = document.getElementById('expslists')
+
+        async function downloadExpense() {
+            await axios.post('http://localhost:3000/expense/downloadexpense', {
+                uid: localStorage.getItem('uid')
+            })
+                .then(response => {
+                    if (response.status === 200) {
+                        var a = document.createElement('a')
+                        a.href = response.data.fileurl
+                        a.download = 'myexpense.csv'
+                        a.click()
+                        console.log(response)
+                    } else {
+                        throw new Error(response.data.message)
+                    }
+                })
+                .catch(err=>{
+                    console.log(err.message)
+                })
+        }
 
 
         async function buyPremiumHandler() {
@@ -157,6 +180,7 @@
                             category: expdesc.value,
                             id: result.data.id
                         }
+                        document.getElementById('expid').style.visibility = 'visible'
                         createElement(data)
                         statusmessage.style.color = 'green'
                         statusmessage.innerHTML = result.data.message
@@ -183,11 +207,13 @@
                 document.getElementById('premid').remove()
                 document.getElementById('premstatus').innerHTML = "You are a Premium User"
                 document.getElementById('leaderid').style.visibility = 'visible'
+                document.getElementById('filterid').style.visibility = 'visible'
             }
             const exps = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`)
             if (exps.data.length > 0) {
                 exps.data.map(e => {
                     createElement(e)
+                    document.getElementById('expid').style.visibility = 'visible'
                 })
             }
         })
@@ -195,7 +221,7 @@
         document.getElementById('leaderid').addEventListener('click', async () => {
             document.getElementById('leaderboardid').style.visibility = 'visible'
             const exps = await axios.get(`http://localhost:3000/expense/leaderboard`)
-            exps.data.map(async e=>{
+            exps.data.map(async e => {
                 const li = document.createElement('li')
                 li.appendChild(document.createTextNode(`Name : ${e.name} , Total Expense : ${e.totalexpense} Rs`))
                 document.getElementById('leaderlistid').appendChild(li)
@@ -203,9 +229,14 @@
         })
 
         function createElement(data) {
-            let dt = new Date(data.createdAt)
+            let dt;
+            if (!data.createdAt) {
+                dt = new Date()
+            } else {
+                dt = new Date(data.createdAt)
+            }
             const tr = document.createElement('tr')
-            tr.setAttribute('style','border-bottom: 1px dotted black;')
+            tr.setAttribute('style', 'border-bottom: 1px dotted black;')
             const td = document.createElement('td')
             const td1 = document.createElement('td')
             const td2 = document.createElement('td')

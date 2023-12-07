@@ -3,6 +3,7 @@ const path = require('path')
 const bcrypt = require('bcrypt')
 const saltRounds = 10
 
+const AWS = require('aws-sdk')
 
 const jwt = require('jsonwebtoken')
 const pvtkey = 'backendencryptstring'
@@ -355,3 +356,55 @@ exports.getLeaderboard = async (req, res, next) => {
     })
     return res.json(l)
 }
+
+function uploadToS3(data, filename) {
+    const BUCKET_NAME = process.env.BUCKET_NAME
+    const IAM_USER_KEY = process.env.IAM_USER_KEY
+    const IAM_SECRET_KEY = process.env.IAM_SECRET_KEY
+
+    let s3bucket = new AWS.S3({
+        accessKeyId: IAM_USER_KEY,
+        secretAccessKey: IAM_SECRET_KEY
+    })
+
+    var params = {
+        Bucket: BUCKET_NAME,
+        Key: filename,
+        Body: data,
+        ACL: 'public-read'
+    }
+    return new Promise((resolve, reject) => {
+
+        s3bucket.upload(params, (err, s3response) => {
+            if (err) {
+                console.log('Something Went Wrong')
+                reject(err)
+            } else {
+                console.log('Success', s3response)
+                resolve(s3response.Location)
+            }
+        })
+    })
+}
+
+
+exports.downloadExpenses = async (req, res, next) => {
+    const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
+        if (err) throw new Error;
+        return decoded
+    })
+    const user = await User.findOne({
+        where: {
+            id: uid
+        }
+    })
+    const expenses = await user.getExpenses();
+    const stringifiedExpenses = JSON.stringify(expenses)
+    const dt = new Date()
+    const filename = `Expense_${dt}.txt`
+    const fileurl = await uploadToS3(stringifiedExpenses, filename);
+    return res.status(200).json({ fileurl, success: true })
+}
+
+
+
