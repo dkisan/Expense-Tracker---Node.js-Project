@@ -241,7 +241,6 @@ exports.purchasepremium = async (req, res, next) => {
 }
 
 exports.getExpenses = async (req, res, next) => {
-    console.log(req.headers.pgno)
     try {
         const uid = jwt.verify(req.params.usertoken, pvtkey, (err, decoded) => {
             if (err) throw new Error;
@@ -252,7 +251,7 @@ exports.getExpenses = async (req, res, next) => {
                 id: uid
             }
         })
-        let perpage = 10
+        let perpage = +req.headers.perpage
         let pgno = +req.headers.pgno - 1
         const totalexp = await user.countExpenses()
         const exp = await user.getExpenses({
@@ -405,16 +404,20 @@ exports.downloadExpenses = async (req, res, next) => {
                 id: uid
             }
         })
-        const expenses = await user.getExpenses();
-        const stringifiedExpenses = JSON.stringify(expenses)
-        const dt = new Date()
-        const filename = `Expense_${dt}.txt`
-        const fileurl = await uploadToS3(stringifiedExpenses, filename);
-        await user.createDownloadurl({
-            name: filename,
-            url: fileurl
-        })
-        return res.status(200).json({ fileurl, success: true })
+        if(user.ispremium){
+            const expenses = await user.getExpenses();
+            const stringifiedExpenses = JSON.stringify(expenses)
+            const dt = new Date()
+            const filename = `Expense_${dt}.txt`
+            const fileurl = await uploadToS3(stringifiedExpenses, filename);
+            await user.createDownloadurl({
+                name: filename,
+                url: fileurl
+            })
+            return res.status(200).json({ fileurl, success: true })
+        }else{
+            return res.status(500).json({ message : 'You are not a Premium User'})
+        }
     } catch (err) {
         return res.status(500).json({ fileurl: '', success: false, err: err })
     }
@@ -432,8 +435,12 @@ exports.getdownloadExpenses = async (req, res, next) => {
                 id: uid
             }
         })
-        const dexp = await user.getDownloadurls()
-        return res.status(200).json(dexp)
+        if(user.ispremium){
+            const dexp = await user.getDownloadurls()
+            return res.status(200).json(dexp)
+        }else{
+            throw new Error
+        }
     } catch {
         return res.status(500).json({ message: 'Some error occured' })
     }

@@ -39,13 +39,15 @@
         </div>
     </form>
     <hr>
-    <div id="expid" style="visibility: hidden;">
+    <div id="expid" style="visibility: hidden; width: 80vw; margin: auto;">
         <h1 style="text-align: center;">Expenses</h1>
-        <div id="filterid" style="display: flex; justify-content: center; visibility: hidden;">
-            <select name="" id="">
-                <option value="daily">daily</option>
-                <option value="monthly">monthly</option>
-                <option value="yearly">yearly</option>
+        <div id="filterid" style="display: flex; justify-content: flex-end; visibility: hidden;">
+            <label for="">Rows Per Page</label>
+            <select name="" id="rowsid" onchange="rowsperpageHandler(event)">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
             </select>
         </div>
         <div>
@@ -65,7 +67,9 @@
 
                 </tbody>
             </table>
-            <ul id="paginationlist" style="list-style-type: none; width: 80vw; margin: auto; margin-top: 10px; display: flex; justify-content: flex-end; gap: 4px;"></ul>
+            <ul id="paginationlist"
+                style="list-style-type: none; width: 80vw; margin: auto; margin-top: 10px; display: flex; justify-content: flex-end; gap: 4px; flex-wrap: wrap;">
+            </ul>
         </div>
         <div style="display: flex; flex-direction: column; align-items: center; margin-top: 2vh;">
             <button style="width: max-content;" onclick="downloadExpense()">Download Expenses</button>
@@ -90,11 +94,19 @@
         const statusmessage = document.getElementById('statusmessage')
         const expslists = document.getElementById('expslists')
 
+        async function rowsperpageHandler() {
+            let perPage = document.getElementById('rowsid').value
+            localStorage.setItem('perpage', perPage)
+            const exps = await fetchExp(1, perPage)
+            expenseHandler(exps,perPage)
+            // window.location.reload()
+        }
+
         async function downloadExpense() {
             await axios.post('http://localhost:3000/expense/downloadexpense', {
                 uid: localStorage.getItem('uid')
             })
-                .then(response => {
+                .then(async response => {
                     if (response.status === 200) {
                         var a = document.createElement('a')
                         a.href = response.data.fileurl
@@ -104,8 +116,8 @@
                         throw new Error(response.data.message)
                     }
                 })
-                .catch(err => {
-                    console.log(err.message)
+                .catch(async err => {
+                    alert('You are not a Premium User')
                 })
         }
 
@@ -200,12 +212,13 @@
                 })
         }
 
-        function fetchExp(pgno) {
+        function fetchExp(pgno, perPage) {
             return new Promise(async (resolve, reject) => {
                 try {
                     const exp = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`, {
                         headers: {
-                            pgno: pgno
+                            pgno: pgno,
+                            perPage: perPage
                         }
                     })
                     resolve(exp)
@@ -217,9 +230,10 @@
         }
 
         async function paginatioHandler(pgno) {
-            const exps = await fetchExp(pgno)
+            let perPage = localStorage.getItem('perpage')
+            const exps = await fetchExp(pgno,perPage)
             const rowdata = document.getElementById('expenserow')
-            while(rowdata.firstChild){
+            while (rowdata.firstChild) {
                 rowdata.firstChild.remove()
             }
             if (exps.data.exp.length > 0) {
@@ -234,22 +248,53 @@
             const isprem = await axios.post('http://localhost:3000/expense/ispremium', {
                 uid: localStorage.getItem('uid')
             })
+            var perPage = localStorage.getItem('perpage')
+            if(!perPage) {
+                perPage = 5
+                localStorage.setItem('perpage',5)
+            }
+            document.getElementById('rowsid').value = perPage
             if (isprem.data) {
                 document.getElementById('premid').remove()
                 document.getElementById('premstatus').innerHTML = "You are a Premium User"
                 document.getElementById('leaderid').style.visibility = 'visible'
                 document.getElementById('filterid').style.visibility = 'visible'
+
+                const delist = await axios.get(`http://localhost:3000/expense/downloadexpenses/${localStorage.getItem('uid')}`)
+                if (delist.data.length > 0) {
+                    delist.data.map(e => {
+                        const li = document.createElement('li')
+                        const a = document.createElement('a')
+                        a.setAttribute('href', `${e.url}`)
+                        a.appendChild(document.createTextNode(`${e.name}`))
+                        li.appendChild(a)
+                        document.getElementById('dexplist').appendChild(li)
+                    })
+                }
             }
             // const exps = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`)
-            const exps = await fetchExp(1)
+            const exps = await fetchExp(1, perPage)
+            expenseHandler(exps,perPage)
+
+        })
+
+        function expenseHandler(exp,perPage){
+            const exps = exp
+            const rowdata = document.getElementById('expenserow')
+            while (rowdata.firstChild) {
+                rowdata.firstChild.remove()
+            }
+            const paginationlist = document.getElementById('paginationlist')
+            while (paginationlist.firstChild) {
+                paginationlist.firstChild.remove()
+            }
             if (exps.data.exp.length > 0) {
                 exps.data.exp.map(e => {
                     createElement(e)
                     document.getElementById('expid').style.visibility = 'visible'
                 })
             }
-            let pgno = Math.ceil(exps.data.totalexp / 10)
-            console.log(exps.data.totalexp,pgno)
+            let pgno = Math.ceil(exps.data.totalexp / perPage)
             for (var i = 0; i < pgno; i++) {
                 const li = document.createElement('li')
                 const button = document.createElement('button')
@@ -258,18 +303,7 @@
                 li.appendChild(button)
                 document.getElementById('paginationlist').appendChild(li)
             }
-            const delist = await axios.get(`http://localhost:3000/expense/downloadexpenses/${localStorage.getItem('uid')}`)
-            if (delist.data.length > 0) {
-                delist.data.map(e => {
-                    const li = document.createElement('li')
-                    const a = document.createElement('a')
-                    a.setAttribute('href', `${e.url}`)
-                    a.appendChild(document.createTextNode(`${e.name}`))
-                    li.appendChild(a)
-                    document.getElementById('dexplist').appendChild(li)
-                })
-            }
-        })
+        }
 
         document.getElementById('leaderid').addEventListener('click', async () => {
             document.getElementById('leaderboardid').style.visibility = 'visible'
