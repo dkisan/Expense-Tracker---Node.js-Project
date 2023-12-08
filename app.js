@@ -2,10 +2,19 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const app = express();
 const dotenv = require('dotenv')
-
+const helmet = require('helmet')
+const morgan = require('morgan')
+const fs = require('fs')
+const path = require('path')
+const cors = require('cors')
 
 dotenv.config()
 
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
+
+app.use(cors())
+app.use(helmet())
+app.use(morgan('combined', { stream: accessLogStream }))
 app.use(bodyParser.json())
 
 const sequelize = require('./util/database')
@@ -38,5 +47,6 @@ app.use('/', userroute)
 // sequelize.sync({force:true})
 sequelize.sync()
     .then(() => {
+        console.log('server started')
         app.listen(3000);
     })
