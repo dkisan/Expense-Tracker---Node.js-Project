@@ -167,7 +167,7 @@ exports.purchaseorder = async (req, res, next) => {
                     paymentid: 'nill',
                     status: order.status
                 })
-                return res.status(200).json({ order })
+                return res.status(200).json({ order,rzpid:process.env.key_id })
             }
         })
     } catch (err) {

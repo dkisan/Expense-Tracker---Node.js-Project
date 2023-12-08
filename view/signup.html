@@ -48,15 +48,12 @@
                 password: password.value
             })
                 .then(result => {
-                    if (result.data.errors) {
-                        statusmessage.style.color = 'red'
-                        statusmessage.innerHTML = 'User Already Exists'
-                    } else {
                         statusmessage.style.color = 'green'
                         statusmessage.innerHTML = 'User Created Successfully'
-                    }
                 })
                 .catch(err => {
+                    statusmessage.style.color = 'red'
+                    statusmessage.innerHTML = 'User Already Exists'
                     console.log(err)
                 })
         }

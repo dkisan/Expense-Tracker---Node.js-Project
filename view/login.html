@@ -4,13 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' http:cdnjs.cloudflare.com"> -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.min.js"> -->
     <title>Login</title>
 </head>
 
 <body>
 
     <h1 style="text-align: center; color: blue;"><u>Expense Tracker</u></h1>
-    <form style="margin: auto; width: max-content; display: flex; flex-direction: column; gap: 10px; " action=""
+    <form id="loginformid" style="margin: auto; width: max-content; display: flex; flex-direction: column; gap: 10px; " action=""
         onsubmit="formloginHandler(event)" method="post">
         <div style="display: flex; gap: 4px; ">
             <label for="">Enter Your Email : </label>

@@ -99,7 +99,6 @@
             localStorage.setItem('perpage', perPage)
             const exps = await fetchExp(1, perPage)
             expenseHandler(exps,perPage)
-            // window.location.reload()
         }
 
         async function downloadExpense() {
@@ -126,10 +125,9 @@
             const order = await axios.post('http://localhost:3000/expense/purchaseorder', {
                 uid: localStorage.getItem('uid')
             })
-
             var options = {
-                "key": 'rzp_test_LZatoItzsPPRit',
-                "amount": '250000',
+                "key": `${order.data.rzpid}`,
+                "amount": 1000.00,
                 "name": "test",
                 "order_id": order.data.order.id,
                 "prefill": {

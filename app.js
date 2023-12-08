@@ -17,6 +17,13 @@ app.use(helmet())
 app.use(morgan('combined', { stream: accessLogStream }))
 app.use(bodyParser.json())
 
+app.use(function (req, res, next) {
+    res.setHeader(
+      'Content-Security-Policy',
+      "script-src 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://checkout.razorpay.com;"
+    );
+    next();
+  });
 const sequelize = require('./util/database')
 
 const userroute = require('./routes/userroute')
