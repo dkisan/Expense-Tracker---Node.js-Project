@@ -6,7 +6,6 @@ const saltRounds = 10
 const AWS = require('aws-sdk')
 
 const jwt = require('jsonwebtoken')
-const pvtkey = 'backendencryptstring'
 
 const Expense = require('../model/expense')
 const User = require('../model/user')
@@ -111,9 +110,11 @@ exports.postResetPassword = async (req, res, next) => {
         })
         console.log(sendEmail, req.body.email)
         await t.commit()
+        res.status(200).json({message:'Link Sent Successfully'})
     } catch (err) {
         console.log(err.message)
         await t.rollback()
+        res.status(500).json(err)
     }
 
 
@@ -123,7 +124,7 @@ exports.postResetPassword = async (req, res, next) => {
 
 exports.ispremium = async (req, res, next) => {
     try {
-        const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
+        const uid = jwt.verify(req.body.uid, process.env.pvtkey, (err, decoded) => {
             if (err) throw new Error;
             return decoded
         })
@@ -140,21 +141,24 @@ exports.ispremium = async (req, res, next) => {
 
 }
 exports.purchaseorder = async (req, res, next) => {
-    var instance = new Razorpay({
-        key_id: process.env.key_id,
-        key_secret: process.env.key_secret
-    })
-
-    var options = {
-        amount: 250,
-        currency: "INR",
-        receipt: "Oid1"
-    }
-
     try {
+        var instance = new Razorpay({
+            key_id: process.env.key_id,
+            key_secret: process.env.key_secret
+        })
+
+        var options = {
+            amount: 250,
+            currency: "INR",
+            receipt: "Oid1"
+        }
+
         instance.orders.create(options, async (err, order) => {
+            if(err){
+                return res.status(err.statusCode).json(err.error)
+            }
             if (order) {
-                const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
+                const uid = jwt.verify(req.body.uid, process.env.pvtkey, (err, decoded) => {
                     return decoded
                 })
                 const user = await User.findOne({
@@ -162,22 +166,22 @@ exports.purchaseorder = async (req, res, next) => {
                         id: uid
                     }
                 })
-                const result = await user.createPremium({
+                await user.createPremium({
                     orderId: order.id,
                     paymentid: 'nill',
                     status: order.status
                 })
-                return res.status(200).json({ order,rzpid:process.env.key_id })
+                return res.status(200).json({ order, rzpid: process.env.key_id })
             }
         })
     } catch (err) {
-        console.log(err.message)
+        console.log(err)
     }
 }
 
 exports.failedpurchase = async (req, res, next) => {
     try {
-        const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
+        const uid = jwt.verify(req.body.uid, process.env.pvtkey, (err, decoded) => {
             if (err) throw new Error;
             return decoded
         })
@@ -204,7 +208,7 @@ exports.failedpurchase = async (req, res, next) => {
 exports.purchasepremium = async (req, res, next) => {
     const t = await sequelize.transaction()
     try {
-        const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
+        const uid = jwt.verify(req.body.uid, process.env.pvtkey, (err, decoded) => {
             if (err) throw new Error;
             return decoded
         })
@@ -242,7 +246,7 @@ exports.purchasepremium = async (req, res, next) => {
 
 exports.getExpenses = async (req, res, next) => {
     try {
-        const uid = jwt.verify(req.params.usertoken, pvtkey, (err, decoded) => {
+        const uid = jwt.verify(req.params.usertoken, process.env.pvtkey, (err, decoded) => {
             if (err) throw new Error;
             return decoded
         })
@@ -255,10 +259,10 @@ exports.getExpenses = async (req, res, next) => {
         let pgno = +req.headers.pgno - 1
         const totalexp = await user.countExpenses()
         const exp = await user.getExpenses({
-            offset: perpage*pgno,
-            limit:perpage
+            offset: perpage * pgno,
+            limit: perpage
         })
-        return res.status(200).json({exp:exp,totalexp:totalexp})
+        return res.status(200).json({ exp: exp, totalexp: totalexp })
     } catch (err) {
         return res.status(500).json(err)
     }
@@ -267,7 +271,7 @@ exports.getExpenses = async (req, res, next) => {
 exports.postAddExpense = async (req, res, next) => {
     const t = await sequelize.transaction()
     try {
-        const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
+        const uid = jwt.verify(req.body.uid, process.env.pvtkey, (err, decoded) => {
             if (err) throw new Error;
             return decoded
         })
@@ -304,7 +308,7 @@ exports.postAddExpense = async (req, res, next) => {
 exports.deleteExpense = async (req, res, next) => {
     const t = await sequelize.transaction()
     try {
-        const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
+        const uid = jwt.verify(req.body.uid, process.env.pvtkey, (err, decoded) => {
             if (err) throw new Error;
             return decoded
         })
@@ -343,19 +347,6 @@ exports.deleteExpense = async (req, res, next) => {
 }
 
 exports.getLeaderboard = async (req, res, next) => {
-    // const t = await Expense.findAll({
-    //     include:[{
-    //         model:User,
-    //         attributes:['name']
-    //     }],
-    //     attributes: [
-    //         [sequelize.fn('sum', sequelize.col('amount')), 'total']
-    //     ],
-    //     group: ['userId'],
-    //     order: [['total', 'DESC']]
-    // })
-    // return res.json(t)
-
     const l = await User.findAll({
         attributes: ['name', 'totalexpense'],
         order: [['totalexpense', 'DESC']]
@@ -395,7 +386,7 @@ function uploadToS3(data, filename) {
 
 exports.downloadExpenses = async (req, res, next) => {
     try {
-        const uid = jwt.verify(req.body.uid, pvtkey, (err, decoded) => {
+        const uid = jwt.verify(req.body.uid, process.env.pvtkey, (err, decoded) => {
             if (err) throw new Error;
             return decoded
         })
@@ -404,7 +395,7 @@ exports.downloadExpenses = async (req, res, next) => {
                 id: uid
             }
         })
-        if(user.ispremium){
+        if (user.ispremium) {
             const expenses = await user.getExpenses();
             const stringifiedExpenses = JSON.stringify(expenses)
             const dt = new Date()
@@ -415,8 +406,8 @@ exports.downloadExpenses = async (req, res, next) => {
                 url: fileurl
             })
             return res.status(200).json({ fileurl, success: true })
-        }else{
-            return res.status(500).json({ message : 'You are not a Premium User'})
+        } else {
+            return res.status(500).json({ message: 'You are not a Premium User' })
         }
     } catch (err) {
         return res.status(500).json({ fileurl: '', success: false, err: err })
@@ -426,7 +417,7 @@ exports.downloadExpenses = async (req, res, next) => {
 
 exports.getdownloadExpenses = async (req, res, next) => {
     try {
-        const uid = jwt.verify(req.params.uid, pvtkey, (err, decoded) => {
+        const uid = jwt.verify(req.params.uid, process.env.pvtkey, (err, decoded) => {
             if (err) throw new Error;
             return decoded
         })
@@ -435,10 +426,10 @@ exports.getdownloadExpenses = async (req, res, next) => {
                 id: uid
             }
         })
-        if(user.ispremium){
+        if (user.ispremium) {
             const dexp = await user.getDownloadurls()
             return res.status(200).json(dexp)
-        }else{
+        } else {
             throw new Error
         }
     } catch {

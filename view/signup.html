@@ -40,22 +40,23 @@
         const password = document.getElementById('signuppassword')
         const statusmessage = document.getElementById('statusmessage')
 
-        const formsignupHandler = (e) => {
+        const formsignupHandler = async (e) => {
             e.preventDefault();
-            axios.post('http://localhost:3000/user/signup', {
-                name: name.value,
-                email: email.value,
-                password: password.value
-            })
-                .then(result => {
-                        statusmessage.style.color = 'green'
-                        statusmessage.innerHTML = 'User Created Successfully'
+            try {
+                const result = await axios.post('http://localhost:3000/user/signup', {
+                    name: name.value,
+                    email: email.value,
+                    password: password.value
                 })
-                .catch(err => {
-                    statusmessage.style.color = 'red'
-                    statusmessage.innerHTML = 'User Already Exists'
-                    console.log(err)
-                })
+                if (result) {
+                    statusmessage.style.color = 'green'
+                    statusmessage.innerHTML = 'User Created Successfully'
+                }
+            } catch (err) {
+                statusmessage.style.color = 'red'
+                statusmessage.innerHTML = 'User Already Exists'
+                console.log(err)
+            }
         }
 
     </script>

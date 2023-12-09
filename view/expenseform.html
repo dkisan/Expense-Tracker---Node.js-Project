@@ -97,117 +97,125 @@
         async function rowsperpageHandler() {
             let perPage = document.getElementById('rowsid').value
             localStorage.setItem('perpage', perPage)
-            const exps = await fetchExp(1, perPage)
-            expenseHandler(exps,perPage)
+            try {
+                const exps = await fetchExp(1, perPage)
+                expenseHandler(exps, perPage)
+            } catch (err) {
+                console.log(err)
+            }
         }
 
         async function downloadExpense() {
-            await axios.post('http://localhost:3000/expense/downloadexpense', {
-                uid: localStorage.getItem('uid')
-            })
-                .then(async response => {
-                    if (response.status === 200) {
-                        var a = document.createElement('a')
-                        a.href = response.data.fileurl
-                        a.download = 'myexpense.csv'
-                        a.click()
-                    } else {
-                        throw new Error(response.data.message)
-                    }
+            try {
+                const response = await axios.post('http://localhost:3000/expense/downloadexpense', {
+                    uid: localStorage.getItem('uid')
                 })
-                .catch(async err => {
-                    alert('You are not a Premium User')
-                })
+                if (response.status === 200) {
+                    var a = document.createElement('a')
+                    a.href = response.data.fileurl
+                    a.download = 'myexpense.csv'
+                    a.click()
+                } else {
+                    throw new Error(response.data.message)
+                }
+            }
+            catch (err) {
+                alert('You are not a Premium User')
+            }
         }
 
 
         async function buyPremiumHandler() {
-            const order = await axios.post('http://localhost:3000/expense/purchaseorder', {
-                uid: localStorage.getItem('uid')
-            })
-            var options = {
-                "key": `${order.data.rzpid}`,
-                "amount": 1000.00,
-                "name": "test",
-                "order_id": order.data.order.id,
-                "prefill": {
-                    "name": "test name",
-                    "email": "testemail@email.com",
-                    "contact": 1234567890
-                },
-                "theme": {
-                    "color": "#3399cc"
-                },
-                "handler": function (response) {
-                    axios.post('http://localhost:3000/expense/purchasepremium', {
-                        uid: localStorage.getItem('uid'),
-                        pay_id: response.razorpay_payment_id,
-                        order_id: response.razorpay_order_id
-                    })
-                        .then(result => {
-                            if (result.status == 201) {
-                                alert(result.data.message)
-                                document.getElementById('premid').remove()
-                                document.getElementById('premstatus').innerHTML = "You are a Premium User"
-                            }
+            try {
+                const order = await axios.post('http://localhost:3000/expense/purchaseorder', {
+                    uid: localStorage.getItem('uid')
+                })
+                var options = {
+                    "key": `${order.data.rzpid}`,
+                    "amount": 1000.00,
+                    "name": "test",
+                    "order_id": order.data.order.id,
+                    "prefill": {
+                        "name": "test name",
+                        "email": "testemail@email.com",
+                        "contact": 1234567890
+                    },
+                    "theme": {
+                        "color": "#3399cc"
+                    },
+                    "handler": function (response) {
+                        axios.post('http://localhost:3000/expense/purchasepremium', {
+                            uid: localStorage.getItem('uid'),
+                            pay_id: response.razorpay_payment_id,
+                            order_id: response.razorpay_order_id
                         })
-                        .catch(() => {
-                            alert('Something Went wrong')
-                            alert('Try Again')
-                        })
+                            .then(result => {
+                                if (result.status == 201) {
+                                    alert(result.data.message)
+                                    document.getElementById('premid').remove()
+                                    document.getElementById('premstatus').innerHTML = "You are a Premium User"
+                                }
+                            })
+                            .catch(() => {
+                                alert('Something Went wrong')
+                                alert('Try Again')
+                            })
+
+                    }
 
                 }
 
-            }
 
+                var rzp1 = new Razorpay(options);
 
-            var rzp1 = new Razorpay(options);
+                rzp1.open();
 
-            rzp1.open();
-
-            rzp1.on('payment.failed', (response) => {
-                axios.post('http://localhost:3000/expense/failedpurchase', {
-                    uid: localStorage.getItem('uid'),
-                    pay_id: response.error.metadata.payment_id,
-                    order_id: response.error.metadata.order_id
+                rzp1.on('payment.failed', (response) => {
+                    axios.post('http://localhost:3000/expense/failedpurchase', {
+                        uid: localStorage.getItem('uid'),
+                        pay_id: response.error.metadata.payment_id,
+                        order_id: response.error.metadata.order_id
+                    })
                 })
-            })
-
+            }
+            catch (err) {
+                alert('Something went wrong')
+            }
         }
 
-        const formaddexpHandler = (e) => {
+        const formaddexpHandler = async (e) => {
             e.preventDefault();
-            axios.post('http://localhost:3000/expense/addexpense', {
-                amount: expamount.value,
-                description: expdesc.value,
-                category: expcat.value,
-                uid: localStorage.getItem('uid')
-            })
-                .then(result => {
-                    if (result.status == 200) {
-                        const data = {
-                            amount: expamount.value,
-                            description: expdesc.value,
-                            category: expcat.value,
-                            id: result.data.id
-                        }
-                        document.getElementById('expid').style.visibility = 'visible'
-                        createElement(data)
-                        statusmessage.style.color = 'green'
-                        statusmessage.innerHTML = result.data.message
-                        setTimeout(() => {
-                            statusmessage.style.color = 'green'
-                            statusmessage.innerHTML = ''
-                        }, 1000)
-                    } else {
-                        statusmessage.style.color = 'red'
-                        statusmessage.innerHTML = 'Something Went Wrong'
-                    }
+            try {
+
+                const result = await axios.post('http://localhost:3000/expense/addexpense', {
+                    amount: expamount.value,
+                    description: expdesc.value,
+                    category: expcat.value,
+                    uid: localStorage.getItem('uid')
                 })
-                .catch(err => {
+                if (result.status == 200) {
+                    const data = {
+                        amount: expamount.value,
+                        description: expdesc.value,
+                        category: expcat.value,
+                        id: result.data.id
+                    }
+                    document.getElementById('expid').style.visibility = 'visible'
+                    createElement(data)
+                    statusmessage.style.color = 'green'
+                    statusmessage.innerHTML = result.data.message
+                    setTimeout(() => {
+                        statusmessage.style.color = 'green'
+                        statusmessage.innerHTML = ''
+                    }, 1000)
+                } else {
                     statusmessage.style.color = 'red'
                     statusmessage.innerHTML = 'Something Went Wrong'
-                })
+                }
+            } catch (err) {
+                statusmessage.style.color = 'red'
+                statusmessage.innerHTML = 'Something Went Wrong'
+            }
         }
 
         function fetchExp(pgno, perPage) {
@@ -229,7 +237,7 @@
 
         async function paginatioHandler(pgno) {
             let perPage = localStorage.getItem('perpage')
-            const exps = await fetchExp(pgno,perPage)
+            const exps = await fetchExp(pgno, perPage)
             const rowdata = document.getElementById('expenserow')
             while (rowdata.firstChild) {
                 rowdata.firstChild.remove()
@@ -243,40 +251,43 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const isprem = await axios.post('http://localhost:3000/expense/ispremium', {
-                uid: localStorage.getItem('uid')
-            })
-            var perPage = localStorage.getItem('perpage')
-            if(!perPage) {
-                perPage = 5
-                localStorage.setItem('perpage',5)
-            }
-            document.getElementById('rowsid').value = perPage
-            if (isprem.data) {
-                document.getElementById('premid').remove()
-                document.getElementById('premstatus').innerHTML = "You are a Premium User"
-                document.getElementById('leaderid').style.visibility = 'visible'
-                document.getElementById('filterid').style.visibility = 'visible'
-
-                const delist = await axios.get(`http://localhost:3000/expense/downloadexpenses/${localStorage.getItem('uid')}`)
-                if (delist.data.length > 0) {
-                    delist.data.map(e => {
-                        const li = document.createElement('li')
-                        const a = document.createElement('a')
-                        a.setAttribute('href', `${e.url}`)
-                        a.appendChild(document.createTextNode(`${e.name}`))
-                        li.appendChild(a)
-                        document.getElementById('dexplist').appendChild(li)
-                    })
+            try {
+                const isprem = await axios.post('http://localhost:3000/expense/ispremium', {
+                    uid: localStorage.getItem('uid')
+                })
+                var perPage = localStorage.getItem('perpage')
+                if (!perPage) {
+                    perPage = 5
+                    localStorage.setItem('perpage', 5)
                 }
+                document.getElementById('rowsid').value = perPage
+                if (isprem.data) {
+                    document.getElementById('premid').remove()
+                    document.getElementById('premstatus').innerHTML = "You are a Premium User"
+                    document.getElementById('leaderid').style.visibility = 'visible'
+                    document.getElementById('filterid').style.visibility = 'visible'
+
+                    const delist = await axios.get(`http://localhost:3000/expense/downloadexpenses/${localStorage.getItem('uid')}`)
+                    if (delist.data.length > 0) {
+                        delist.data.map(e => {
+                            const li = document.createElement('li')
+                            const a = document.createElement('a')
+                            a.setAttribute('href', `${e.url}`)
+                            a.appendChild(document.createTextNode(`${e.name}`))
+                            li.appendChild(a)
+                            document.getElementById('dexplist').appendChild(li)
+                        })
+                    }
+                }
+                const exps = await fetchExp(1, perPage)
+                expenseHandler(exps, perPage)
+            } catch (err) {
+                alert('Something went wrong')
             }
-            // const exps = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`)
-            const exps = await fetchExp(1, perPage)
-            expenseHandler(exps,perPage)
 
         })
 
-        function expenseHandler(exp,perPage){
+        function expenseHandler(exp, perPage) {
             const exps = exp
             const rowdata = document.getElementById('expenserow')
             while (rowdata.firstChild) {
@@ -305,12 +316,16 @@
 
         document.getElementById('leaderid').addEventListener('click', async () => {
             document.getElementById('leaderboardid').style.visibility = 'visible'
-            const exps = await axios.get(`http://localhost:3000/expense/leaderboard`)
-            exps.data.map(async e => {
-                const li = document.createElement('li')
-                li.appendChild(document.createTextNode(`Name : ${e.name} , Total Expense : ${e.totalexpense} Rs`))
-                document.getElementById('leaderlistid').appendChild(li)
-            })
+            try {
+                const exps = await axios.get(`http://localhost:3000/expense/leaderboard`)
+                exps.data.map(async e => {
+                    const li = document.createElement('li')
+                    li.appendChild(document.createTextNode(`Name : ${e.name} , Total Expense : ${e.totalexpense} Rs`))
+                    document.getElementById('leaderlistid').appendChild(li)
+                })
+            } catch (err) {
+                alert('Something went wrong')
+            }
         })
 
         function createElement(data) {
@@ -347,39 +362,39 @@
 
 
         async function deleteExpense(e, id) {
-            await axios.delete('http://localhost:3000/expense/deleteexpense', {
-                data: {
-                    id: id,
-                    uid: localStorage.getItem('uid')
-                }
-            })
-                .then(result => {
-                    if (result.status == 200) {
-                        document.getElementById('expenserow').removeChild(e.target.parentElement.parentElement)
-                        statusmessage.style.color = 'green'
-                        statusmessage.innerHTML = result.data.message
-                        setTimeout(() => {
-                            statusmessage.style.color = 'green'
-                            statusmessage.innerHTML = ''
-                        }, 1000)
-                    } else {
-                        statusmessage.style.color = 'red'
-                        statusmessage.innerHTML = result.data.message
-                        setTimeout(() => {
-                            statusmessage.style.color = 'red'
-                            statusmessage.innerHTML = ''
-                        }, 1000)
+
+            try {
+
+                const result = await axios.delete('http://localhost:3000/expense/deleteexpense', {
+                    data: {
+                        id: id,
+                        uid: localStorage.getItem('uid')
                     }
                 })
-                .catch(err => {
+                if (result.status == 200) {
+                    document.getElementById('expenserow').removeChild(e.target.parentElement.parentElement)
+                    statusmessage.style.color = 'green'
+                    statusmessage.innerHTML = result.data.message
+                    setTimeout(() => {
+                        statusmessage.style.color = 'green'
+                        statusmessage.innerHTML = ''
+                    }, 1000)
+                } else {
                     statusmessage.style.color = 'red'
-                    statusmessage.innerHTML = 'Some error occured'
+                    statusmessage.innerHTML = result.data.message
                     setTimeout(() => {
                         statusmessage.style.color = 'red'
                         statusmessage.innerHTML = ''
                     }, 1000)
-                    console.log(err)
-                })
+                }
+            } catch (err) {
+                statusmessage.style.color = 'red'
+                statusmessage.innerHTML = 'Some error occured'
+                setTimeout(() => {
+                    statusmessage.style.color = 'red'
+                    statusmessage.innerHTML = ''
+                }, 1000)
+            }
         }
 
     </script>
