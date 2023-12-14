@@ -365,7 +365,7 @@
 
             try {
 
-                const result = await axios.delete(`${process.env.WEBSITE_ADDRESS}/expense/deleteexpense`, {
+                const result = await axios.delete(`/expense/deleteexpense`, {
                     data: {
                         id: id,
                         uid: localStorage.getItem('uid')
