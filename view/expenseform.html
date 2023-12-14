@@ -107,7 +107,7 @@
 
         async function downloadExpense() {
             try {
-                const response = await axios.post('http://localhost:3000/expense/downloadexpense', {
+                const response = await axios.post(`/expense/downloadexpense`, {
                     uid: localStorage.getItem('uid')
                 })
                 if (response.status === 200) {
@@ -127,7 +127,7 @@
 
         async function buyPremiumHandler() {
             try {
-                const order = await axios.post('http://localhost:3000/expense/purchaseorder', {
+                const order = await axios.post(`/expense/purchaseorder`, {
                     uid: localStorage.getItem('uid')
                 })
                 var options = {
@@ -144,7 +144,7 @@
                         "color": "#3399cc"
                     },
                     "handler": function (response) {
-                        axios.post('http://localhost:3000/expense/purchasepremium', {
+                        axios.post(`/expense/purchasepremium`, {
                             uid: localStorage.getItem('uid'),
                             pay_id: response.razorpay_payment_id,
                             order_id: response.razorpay_order_id
@@ -171,7 +171,7 @@
                 rzp1.open();
 
                 rzp1.on('payment.failed', (response) => {
-                    axios.post('http://localhost:3000/expense/failedpurchase', {
+                    axios.post(`/expense/failedpurchase`, {
                         uid: localStorage.getItem('uid'),
                         pay_id: response.error.metadata.payment_id,
                         order_id: response.error.metadata.order_id
@@ -187,7 +187,7 @@
             e.preventDefault();
             try {
 
-                const result = await axios.post('http://localhost:3000/expense/addexpense', {
+                const result = await axios.post(`/expense/addexpense`, {
                     amount: expamount.value,
                     description: expdesc.value,
                     category: expcat.value,
@@ -221,7 +221,7 @@
         function fetchExp(pgno, perPage) {
             return new Promise(async (resolve, reject) => {
                 try {
-                    const exp = await axios.get(`http://localhost:3000/expense/getexpense/${localStorage.getItem('uid')}`, {
+                    const exp = await axios.get(`/expense/getexpense/${localStorage.getItem('uid')}`, {
                         headers: {
                             pgno: pgno,
                             perPage: perPage
@@ -252,7 +252,7 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const isprem = await axios.post('http://localhost:3000/expense/ispremium', {
+                const isprem = await axios.post(`/expense/ispremium`, {
                     uid: localStorage.getItem('uid')
                 })
                 var perPage = localStorage.getItem('perpage')
@@ -267,7 +267,7 @@
                     document.getElementById('leaderid').style.visibility = 'visible'
                     document.getElementById('filterid').style.visibility = 'visible'
 
-                    const delist = await axios.get(`http://localhost:3000/expense/downloadexpenses/${localStorage.getItem('uid')}`)
+                    const delist = await axios.get(`/expense/downloadexpenses/${localStorage.getItem('uid')}`)
                     if (delist.data.length > 0) {
                         delist.data.map(e => {
                             const li = document.createElement('li')
@@ -317,7 +317,7 @@
         document.getElementById('leaderid').addEventListener('click', async () => {
             document.getElementById('leaderboardid').style.visibility = 'visible'
             try {
-                const exps = await axios.get(`http://localhost:3000/expense/leaderboard`)
+                const exps = await axios.get(`/expense/leaderboard`)
                 exps.data.map(async e => {
                     const li = document.createElement('li')
                     li.appendChild(document.createTextNode(`Name : ${e.name} , Total Expense : ${e.totalexpense} Rs`))
@@ -365,7 +365,7 @@
 
             try {
 
-                const result = await axios.delete('http://localhost:3000/expense/deleteexpense', {
+                const result = await axios.delete(`${process.env.WEBSITE_ADDRESS}/expense/deleteexpense`, {
                     data: {
                         id: id,
                         uid: localStorage.getItem('uid')

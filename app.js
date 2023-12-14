@@ -57,3 +57,6 @@ sequelize.sync()
         console.log('server started')
         app.listen(3000);
     })
+    .catch(err=>{
+      console.log(err)
+    })
